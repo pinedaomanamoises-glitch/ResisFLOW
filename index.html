@@ -95,12 +95,26 @@
                     <div class="px-3 py-2 text-xs font-semibold text-theme-gray-500 uppercase tracking-wider">Esquema Eléctrico</div>
                     <button onclick="setSymbolStandard('ansi')" class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl hover:bg-theme-gray-200 dark:hover:bg-theme-gray-800 transition-colors">
                         <span class="flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4"></i> ANSI (Zig-Zag)</span>
-                        <i id="check-ansi" data-lucide="check" class="w-4 h-4 text-theme-blue"></i>
+                        <i id="check-ansi" data-lucide="check" class="w-4 h-4 text-theme-blue hidden"></i>
                     </button>
                     <button onclick="setSymbolStandard('iec')" class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl hover:bg-theme-gray-200 dark:hover:bg-theme-gray-800 transition-colors">
                         <span class="flex items-center gap-2"><i data-lucide="square" class="w-4 h-4"></i> IEC (Rectángulo)</span>
-                        <i id="check-iec" data-lucide="check" class="w-4 h-4 text-theme-blue hidden"></i>
+                        <i id="check-iec" data-lucide="check" class="w-4 h-4 text-theme-blue"></i>
                     </button>
+
+                    <div class="my-1 border-t border-theme-gray-200 dark:border-theme-gray-800"></div>
+
+                    <!-- Configuración del Tamaño de Paquete -->
+                    <div class="px-3 py-2 text-xs font-semibold text-theme-gray-500 uppercase tracking-wider">Tamaño de Paquete</div>
+                    <div class="px-3 py-1">
+                        <select id="pack-size-select" onchange="setPackSize(this.value)" class="w-full bg-theme-gray-100 dark:bg-theme-gray-800 border-0 rounded-xl px-2 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-theme-blue outline-none transition">
+                            <option value="1">1 Pieza (Sin paquete)</option>
+                            <option value="5">5 Piezas / paquete</option>
+                            <option value="10" selected>10 Piezas / paquete</option>
+                            <option value="20">20 Piezas / paquete</option>
+                            <option value="50">50 Piezas / paquete</option>
+                        </select>
+                    </div>
 
                     <div class="my-1 border-t border-theme-gray-200 dark:border-theme-gray-800"></div>
 
@@ -117,6 +131,14 @@
                         <span class="flex items-center gap-2"><i data-lucide="compass" class="w-4 h-4"></i> Tech Navy</span>
                         <i id="check-theme-navy" data-lucide="check" class="w-4 h-4 text-theme-blue hidden"></i>
                     </button>
+
+                    <div class="my-1 border-t border-theme-gray-200 dark:border-theme-gray-800"></div>
+
+                    <!-- Sección Acerca de -->
+                    <div class="px-3 py-2">
+                        <p class="text-xs font-semibold text-theme-gray-500 uppercase tracking-wider mb-1">Acerca de</p>
+                        <p class="text-xs font-bold text-theme-blue">Created by Nata Omaña</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -194,7 +216,7 @@
             </div>
 
             <div id="results-container" class="space-y-4">
-                <!-- Opciones dinámicas -->
+                <!-- Por defecto inicia vacío -->
             </div>
         </section>
 
@@ -231,14 +253,14 @@
             <div class="flex items-center justify-between border-b border-theme-gray-200 dark:border-theme-gray-800 pb-3">
                 <div class="flex items-center gap-2">
                     <i data-lucide="plus-circle" class="w-5 h-5 text-theme-blue"></i>
-                    <h3 class="text-lg font-bold">Agregar Cantidades a la Lista</h3>
+                    <h3 class="text-lg font-bold">Agregar a la Lista</h3>
                 </div>
                 <button onclick="closeQuantityModal()" class="w-8 h-8 rounded-full bg-theme-gray-100 dark:bg-theme-gray-800 flex items-center justify-center hover:bg-theme-gray-200 dark:hover:bg-theme-gray-700 transition">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <p class="text-xs text-theme-gray-500 font-medium">Especifica cuántas piezas necesitas de cada valor para esta combinación:</p>
+            <p id="pack-modal-subtitle" class="text-xs text-theme-gray-500 font-medium">Especifica cuántas piezas necesitas:</p>
 
             <div id="quantity-inputs-container" class="space-y-3">
                 <!-- Inputs dinámicos por valor de resistencia -->
@@ -257,7 +279,7 @@
             <div class="flex items-center justify-between border-b border-theme-gray-200 dark:border-theme-gray-800 pb-3">
                 <div class="flex items-center gap-2">
                     <i data-lucide="list-checks" class="w-5 h-5 text-theme-green"></i>
-                    <h3 class="text-lg font-bold">Lista de Resistores Agregados</h3>
+                    <h3 class="text-lg font-bold">Lista de Resistores</h3>
                 </div>
                 <button onclick="closeInventoryModal()" class="w-8 h-8 rounded-full bg-theme-gray-100 dark:bg-theme-gray-800 flex items-center justify-center hover:bg-theme-gray-200 dark:hover:bg-theme-gray-700 transition">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -311,18 +333,20 @@
         };
 
         // Estado Global
-        let currentSymbolStandard = 'ansi';
+        let currentSymbolStandard = 'iec';
         let currentTheme = 'dark';
+        let currentPackSize = parseInt(localStorage.getItem('resiscalc_pack_size')) || 10;
         let currentCalculatedResults = [];
         let selectedOptionIndex = null;
-        let addedResistorsList = JSON.parse(localStorage.getItem('resiscalc_inventory')) || []; // Cargar desde localStorage
+        let addedResistorsList = JSON.parse(localStorage.getItem('resiscalc_inventory')) || [];
         let targetItemForQuantity = null;
 
         window.onload = function() {
             lucide.createIcons();
             setupEventListeners();
+            document.getElementById('pack-size-select').value = currentPackSize;
             updateInventoryBadge();
-            calculate();
+            renderResults([]); // Iniciar por defecto sin combinaciones
         };
 
         function setupEventListeners() {
@@ -377,6 +401,12 @@
 
         function toggleMenu() {
             document.getElementById('menu-dropdown').classList.toggle('hidden');
+        }
+
+        function setPackSize(val) {
+            currentPackSize = parseInt(val) || 10;
+            localStorage.setItem('resiscalc_pack_size', currentPackSize);
+            updateInventoryBadge();
         }
 
         function setSymbolStandard(standard) {
@@ -604,8 +634,8 @@
             if (results.length === 0) {
                 container.innerHTML = `
                     <div class="bg-white dark:bg-theme-gray-900 rounded-3xl p-8 text-center text-theme-gray-500 border border-theme-gray-200 dark:border-theme-gray-800">
-                        <i data-lucide="alert-circle" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
-                        <p>Sin resultados disponibles.</p>
+                        <i data-lucide="calculator" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
+                        <p class="text-sm font-medium">Ingresa el valor deseado y presiona "Calcular Combinaciones".</p>
                     </div>
                 `;
                 lucide.createIcons();
@@ -687,68 +717,107 @@
             const stroke = "currentColor";
 
             if (item.type === 'direct') {
+                const startX = isANSI ? 48 : 50;
+                const width = isANSI ? 104 : 80;
+                const endX = startX + width;
                 return `
-                <svg class="w-48 h-14 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 160 40">
-                    <line x1="10" y1="20" x2="40" y2="20" stroke="${stroke}" stroke-width="2.5"/>
-                    ${renderResistorSymbol(40, 20, isANSI)}
-                    <line x1="120" y1="20" x2="150" y2="20" stroke="${stroke}" stroke-width="2.5"/>
-                    <text x="80" y="36" text-anchor="middle" font-size="9" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[0])}</text>
+                <svg class="w-56 h-14 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 200 45">
+                    <line x1="10" y1="20" x2="${startX}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                    ${renderResistorSymbol(startX, 20, isANSI)}
+                    <line x1="${endX}" y1="20" x2="190" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                    <text x="100" y="38" text-anchor="middle" font-size="9" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[0])}</text>
                 </svg>`;
             }
 
             if (item.type.includes('series')) {
                 const count = item.resistors.length;
                 if (count === 2) {
+                    const w1 = isANSI ? 104 : 80;
+                    const w2 = isANSI ? 104 : 80;
+                    const x1 = isANSI ? 30 : 35;
+                    const e1 = x1 + w1;
+                    const x2 = e1 + 30;
+                    const e2 = x2 + w2;
+                    const totalW = e2 + 30;
                     return `
-                    <svg class="w-64 h-14 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 220 40">
-                        <line x1="10" y1="20" x2="30" y2="20" stroke="${stroke}" stroke-width="2.5"/>
-                        ${renderResistorSymbol(30, 20, isANSI)}
-                        <line x1="110" y1="20" x2="120" y2="20" stroke="${stroke}" stroke-width="2.5"/>
-                        ${renderResistorSymbol(120, 20, isANSI)}
-                        <line x1="200" y1="20" x2="210" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                    <svg class="w-72 h-14 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 ${totalW} 45">
+                        <line x1="10" y1="20" x2="${x1}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        ${renderResistorSymbol(x1, 20, isANSI)}
+                        <text x="${x1 + w1/2}" y="38" text-anchor="middle" font-size="9" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[0])}</text>
+
+                        <line x1="${e1}" y1="20" x2="${x2}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        ${renderResistorSymbol(x2, 20, isANSI)}
+                        <text x="${x2 + w2/2}" y="38" text-anchor="middle" font-size="9" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[1])}</text>
+
+                        <line x1="${e2}" y1="20" x2="${totalW - 10}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
                     </svg>`;
                 } else {
+                    const w1 = isANSI ? 90 : 70;
+                    const w2 = isANSI ? 90 : 70;
+                    const w3 = isANSI ? 90 : 70;
+                    const x1 = isANSI ? 20 : 25;
+                    const e1 = x1 + w1;
+                    const x2 = e1 + 25;
+                    const e2 = x2 + w2;
+                    const x3 = e2 + 25;
+                    const e3 = x3 + w3;
+                    const totalW = e3 + 20;
                     return `
-                    <svg class="w-72 h-14 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 280 40">
-                        <line x1="5" y1="20" x2="20" y2="20" stroke="${stroke}" stroke-width="2.5"/>
-                        ${renderResistorSymbol(20, 20, isANSI)}
-                        <line x1="100" y1="20" x2="105" y2="20" stroke="${stroke}" stroke-width="2.5"/>
-                        ${renderResistorSymbol(105, 20, isANSI)}
-                        <line x1="185" y1="20" x2="190" y2="20" stroke="${stroke}" stroke-width="2.5"/>
-                        ${renderResistorSymbol(190, 20, isANSI)}
-                        <line x1="270" y1="20" x2="275" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                    <svg class="w-80 h-14 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 ${totalW} 45">
+                        <line x1="10" y1="20" x2="${x1}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        ${renderResistorSymbol(x1, 20, isANSI, w1)}
+                        <text x="${x1 + w1/2}" y="38" text-anchor="middle" font-size="8" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[0])}</text>
+
+                        <line x1="${e1}" y1="20" x2="${x2}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        ${renderResistorSymbol(x2, 20, isANSI, w2)}
+                        <text x="${x2 + w2/2}" y="38" text-anchor="middle" font-size="8" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[1])}</text>
+
+                        <line x1="${e2}" y1="20" x2="${x3}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        ${renderResistorSymbol(x3, 20, isANSI, w3)}
+                        <text x="${x3 + w3/2}" y="38" text-anchor="middle" font-size="8" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[2])}</text>
+
+                        <line x1="${e3}" y1="20" x2="${totalW - 10}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
                     </svg>`;
                 }
             }
 
             if (item.type === 'parallel') {
+                const startX = isANSI ? 45 : 45;
+                const width = isANSI ? 104 : 80;
+                const endX = startX + width;
+                const totalW = endX + 35;
                 return `
-                <svg class="w-56 h-20 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 160 60">
-                    <line x1="10" y1="30" x2="30" y2="30" stroke="${stroke}" stroke-width="2.5"/>
-                    <line x1="30" y1="12" x2="30" y2="48" stroke="${stroke}" stroke-width="2.5"/>
+                <svg class="w-64 h-24 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 ${totalW} 75">
+                    <line x1="10" y1="36" x2="30" y2="36" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="30" y1="14" x2="30" y2="58" stroke="${stroke}" stroke-width="2.5"/>
                     
-                    <line x1="30" y1="12" x2="40" y2="12" stroke="${stroke}" stroke-width="2.5"/>
-                    ${renderResistorSymbol(40, 12, isANSI)}
-                    <line x1="120" y1="12" x2="130" y2="12" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="30" y1="14" x2="${startX}" y2="14" stroke="${stroke}" stroke-width="2.5"/>
+                    ${renderResistorSymbol(startX, 14, isANSI)}
+                    <line x1="${endX}" y1="14" x2="${totalW - 10}" y2="14" stroke="${stroke}" stroke-width="2.5"/>
+                    <text x="${startX + width/2}" y="27" text-anchor="middle" font-size="8" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[0])}</text>
 
-                    <line x1="30" y1="48" x2="40" y2="48" stroke="${stroke}" stroke-width="2.5"/>
-                    ${renderResistorSymbol(40, 48, isANSI)}
-                    <line x1="120" y1="48" x2="130" y2="48" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="30" y1="58" x2="${startX}" y2="58" stroke="${stroke}" stroke-width="2.5"/>
+                    ${renderResistorSymbol(startX, 58, isANSI)}
+                    <line x1="${endX}" y1="58" x2="${totalW - 10}" y2="58" stroke="${stroke}" stroke-width="2.5"/>
+                    <text x="${startX + width/2}" y="71" text-anchor="middle" font-size="8" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[1])}</text>
 
-                    <line x1="130" y1="12" x2="130" y2="48" stroke="${stroke}" stroke-width="2.5"/>
-                    <line x1="130" y1="30" x2="150" y2="30" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="${totalW - 10}" y1="14" x2="${totalW - 10}" y2="58" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="${totalW - 10}" y1="36" x2="${totalW + 10}" y2="36" stroke="${stroke}" stroke-width="2.5"/>
                 </svg>`;
             }
 
             return '';
         }
 
-        function renderResistorSymbol(x, y, isANSI) {
+        function renderResistorSymbol(x, y, isANSI, customWidth) {
             const stroke = "currentColor";
             if (isANSI) {
-                return `<path d="M ${x} ${y} L ${x+10} ${y-7} L ${x+25} ${y+7} L ${x+40} ${y-7} L ${x+55} ${y+7} L ${x+70} ${y-7} L ${x+80} ${y}" fill="none" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round"/>`;
+                const w = customWidth || 104;
+                const step = w / 8;
+                return `<path d="M ${x} ${y} L ${x+step} ${y-7} L ${x+step*3} ${y+7} L ${x+step*5} ${y-7} L ${x+step*7} ${y+7} L ${x+w} ${y}" fill="none" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round"/>`;
             } else {
-                return `<rect x="${x}" y="${y-7}" width="80" height="14" rx="2" fill="none" stroke="${stroke}" stroke-width="2.5"/>`;
+                const w = customWidth || 80;
+                return `<rect x="${x}" y="${y-6}" width="${w}" height="12" rx="2" fill="none" stroke="${stroke}" stroke-width="2.5"/>`;
             }
         }
 
@@ -809,7 +878,16 @@
 
             const modal = document.getElementById('add-quantity-modal');
             const container = document.getElementById('quantity-inputs-container');
+            const subtitle = document.getElementById('pack-modal-subtitle');
             container.innerHTML = '';
+
+            if (currentPackSize > 1) {
+                subtitle.textContent = `Especifica cuántas piezas exactas necesitas (se calculará el equivalente en paquetes de ${currentPackSize} pz):`;
+            } else {
+                subtitle.textContent = `Especifica cuántas piezas individuales necesitas:`;
+            }
+
+            const initialQty = 1;
 
             targetItemForQuantity.resistors.forEach((res, rIdx) => {
                 const row = document.createElement('div');
@@ -819,7 +897,7 @@
                         <span>R${rIdx + 1}:</span> <span class="text-theme-blue">${formatEngineering(res)}</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <input type="number" min="1" value="1" id="qty-input-${rIdx}" 
+                        <input type="number" min="1" value="${initialQty}" id="qty-input-${rIdx}" 
                             class="w-20 bg-white dark:bg-theme-gray-900 border border-theme-gray-200 dark:border-theme-gray-700 rounded-xl px-3 py-1.5 text-center font-bold focus:ring-2 focus:ring-theme-blue outline-none">
                         <span class="text-xs text-theme-gray-500 font-medium">pz</span>
                     </div>
@@ -841,17 +919,19 @@
 
             targetItemForQuantity.resistors.forEach((res, rIdx) => {
                 const input = document.getElementById(`qty-input-${rIdx}`);
-                const qty = parseInt(input ? input.value : 1) || 1;
+                const userVal = input ? parseInt(input.value) : null;
+                const requestedQty = (userVal !== null && !isNaN(userVal) && userVal > 0) ? userVal : 1;
+                
                 const formattedVal = formatEngineering(res);
 
                 const existing = addedResistorsList.find(item => item.value === formattedVal);
                 if (existing) {
-                    existing.quantity += qty;
+                    existing.quantity += requestedQty;
                 } else {
                     addedResistorsList.push({
                         value: formattedVal,
                         raw: res,
-                        quantity: qty
+                        quantity: requestedQty
                     });
                 }
             });
@@ -868,6 +948,7 @@
         function updateInventoryBadge() {
             const badge = document.getElementById('inventory-badge');
             const totalItems = addedResistorsList.reduce((acc, curr) => acc + curr.quantity, 0);
+
             if (totalItems > 0) {
                 badge.textContent = totalItems;
                 badge.classList.remove('hidden');
@@ -892,14 +973,23 @@
                 addedResistorsList.forEach((item, index) => {
                     const row = document.createElement('div');
                     row.className = "flex items-center justify-between bg-theme-gray-100 dark:bg-theme-gray-800 p-3.5 rounded-2xl";
+                    
+                    let badgeText = `${item.quantity} pz`;
+                    let subText = `Valor comercial`;
+
+                    if (currentPackSize > 1) {
+                        const pcts = Math.ceil(item.quantity / currentPackSize);
+                        subText = `Equivale a <strong class="text-slate-800 dark:text-slate-200">${pcts} pqt</strong> (de ${currentPackSize} pz c/u)`;
+                    }
+
                     row.innerHTML = `
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl bg-theme-blue/10 text-theme-blue flex items-center justify-center font-bold text-sm">
-                                ${item.quantity}x
+                            <div class="px-3 py-2 rounded-xl bg-theme-blue/10 text-theme-blue flex items-center justify-center font-bold text-xs whitespace-nowrap">
+                                ${badgeText}
                             </div>
                             <div>
                                 <h4 class="font-bold text-sm">${item.value}</h4>
-                                <span class="text-[11px] text-theme-gray-500 font-medium">Valor comercial</span>
+                                <span class="text-[11px] text-theme-gray-500 font-medium">${subText}</span>
                             </div>
                         </div>
                         <button onclick="removeInventoryItem(${index})" class="w-8 h-8 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition flex items-center justify-center">
@@ -932,7 +1022,6 @@
             openInventoryModal();
         }
 
-        // Función para copiar la lista limpia en formato de texto para WhatsApp/Notas
         function copyInventoryText() {
             if (addedResistorsList.length === 0) {
                 alert('La lista está vacía.');
@@ -941,7 +1030,12 @@
 
             let textToCopy = "📋 *Lista de Resistores - ResisFlow*\n\n";
             addedResistorsList.forEach(item => {
-                textToCopy += `• ${item.quantity} pz de ${item.value}\n`;
+                if (currentPackSize > 1) {
+                    const pcts = Math.ceil(item.quantity / currentPackSize);
+                    textToCopy += `• ${item.value} -> ${item.quantity} pz (${pcts} pqt de ${currentPackSize} pz)\n`;
+                } else {
+                    textToCopy += `• ${item.value} -> ${item.quantity} pz\n`;
+                }
             });
 
             navigator.clipboard.writeText(textToCopy).then(() => {
