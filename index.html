@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Resistencias Comerciales</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        theme: {
+                            blue: '#0066CC',
+                            green: '#28A745',
+                            orange: '#FD7E14',
+                            purple: '#6F42C1',
+                            gray: {
+                                100: '#F8F9FA',
+                                200: '#E9ECEF',
+                                300: '#DEE2E6',
+                                400: '#CED4DA',
+                                500: '#ADB5BD',
+                                600: '#6C757D',
+                                700: '#495057',
+                                800: '#343A40',
+                                900: '#212529'
+                            }
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .dark .glass {
+            background: rgba(33, 37, 41, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .theme-navy .glass {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(108, 117, 125, 0.3);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-theme-gray-100 dark:bg-black theme-navy:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300 min-h-full font-sans antialiased pb-16 selection:bg-theme-blue selection:text-white">
+
+    <!-- Header Transparente con Transición al Scroll -->
+    <header id="main-header" class="sticky top-0 z-40 transition-all duration-300 bg-transparent py-4 border-b border-transparent">
+        <div class="max-w-3xl mx-auto px-4 flex items-center justify-between relative">
+            
+            <!-- Logo y Título Principal -->
+            <div class="flex items-center space-x-3 transition-all duration-300" id="brand-container">
+                <div id="app-logo" class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-theme-blue to-cyan-500 flex items-center justify-center text-white shadow-md transition-all duration-300 transform scale-100 opacity-100">
+                    <i data-lucide="cpu" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h1 id="app-title" class="font-extrabold text-2xl tracking-tight transition-all duration-300">ResisFlow</h1>
+                    <p id="app-subtitle" class="text-xs text-theme-gray-500 font-medium transition-all duration-300">Calculadora Comercial</p>
+                </div>
+            </div>
+
+            <!-- Menú de Opciones (Botón Flotante Tipo Glass) -->
+            <div class="relative">
+                <button id="menu-btn" onclick="toggleMenu()" class="w-11 h-11 rounded-full glass border border-theme-gray-200 dark:border-theme-gray-700 shadow-lg flex items-center justify-center hover:bg-theme-gray-200/50 dark:hover:bg-theme-gray-800/50 transition-all">
+                    <i data-lucide="more-horizontal" class="w-6 h-6"></i>
+                </button>
+
+                <!-- Desplegable Menú -->
+                <div id="menu-dropdown" class="hidden absolute right-0 mt-2 w-64 glass rounded-2xl shadow-2xl border border-theme-gray-200 dark:border-theme-gray-700 p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div class="px-3 py-2 text-xs font-semibold text-theme-gray-500 uppercase tracking-wider">Esquema Eléctrico</div>
+                    <button onclick="setSymbolStandard('ansi')" class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl hover:bg-theme-gray-200 dark:hover:bg-theme-gray-800 transition-colors">
+                        <span class="flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4"></i> ANSI (Zig-Zag)</span>
+                        <i id="check-ansi" data-lucide="check" class="w-4 h-4 text-theme-blue"></i>
+                    </button>
+                    <button onclick="setSymbolStandard('iec')" class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl hover:bg-theme-gray-200 dark:hover:bg-theme-gray-800 transition-colors">
+                        <span class="flex items-center gap-2"><i data-lucide="square" class="w-4 h-4"></i> IEC (Rectángulo)</span>
+                        <i id="check-iec" data-lucide="check" class="w-4 h-4 text-theme-blue hidden"></i>
+                    </button>
+
+                    <div class="my-1 border-t border-theme-gray-200 dark:border-theme-gray-800"></div>
+
+                    <div class="px-3 py-2 text-xs font-semibold text-theme-gray-500 uppercase tracking-wider">Tema Visual</div>
+                    <button onclick="setTheme('light')" class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl hover:bg-theme-gray-200 dark:hover:bg-theme-gray-800 transition-colors">
+                        <span class="flex items-center gap-2"><i data-lucide="sun" class="w-4 h-4"></i> Claro</span>
+                        <i id="check-theme-light" data-lucide="check" class="w-4 h-4 text-theme-blue hidden"></i>
+                    </button>
+                    <button onclick="setTheme('dark')" class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl hover:bg-theme-gray-200 dark:hover:bg-theme-gray-800 transition-colors">
+                        <span class="flex items-center gap-2"><i data-lucide="moon" class="w-4 h-4"></i> Oscuro</span>
+                        <i id="check-theme-dark" data-lucide="check" class="w-4 h-4 text-theme-blue"></i>
+                    </button>
+                    <button onclick="setTheme('navy')" class="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl hover:bg-theme-gray-200 dark:hover:bg-theme-gray-800 transition-colors">
+                        <span class="flex items-center gap-2"><i data-lucide="compass" class="w-4 h-4"></i> Tech Navy</span>
+                        <i id="check-theme-navy" data-lucide="check" class="w-4 h-4 text-theme-blue hidden"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-3xl mx-auto px-4 pt-6 space-y-6">
+
+        <!-- Formulario -->
+        <section class="bg-white dark:bg-theme-gray-900 rounded-3xl p-6 shadow-sm border border-theme-gray-200 dark:border-theme-gray-800 transition-all">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i data-lucide="calculator" class="w-5 h-5 text-theme-blue"></i>
+                Parámetros de Cálculo
+            </h2>
+
+            <form onsubmit="event.preventDefault(); calculate();" class="space-y-4">
+                <!-- Resistencia y Unidades -->
+                <div>
+                    <label class="block text-xs font-semibold text-theme-gray-500 uppercase tracking-wider mb-2">Resistencia Deseada</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="target-value" step="any" placeholder="Ej. 220, 4.7, 10" value="220"
+                            class="flex-1 bg-theme-gray-100 dark:bg-theme-gray-800 border-0 rounded-2xl px-4 py-3 text-lg font-semibold focus:ring-2 focus:ring-theme-blue outline-none transition">
+                        <select id="target-unit" class="bg-theme-gray-100 dark:bg-theme-gray-800 border-0 rounded-2xl px-4 py-3 text-base font-semibold focus:ring-2 focus:ring-theme-blue outline-none transition">
+                            <option value="p">pΩ</option>
+                            <option value="n">nΩ</option>
+                            <option value="u">µΩ</option>
+                            <option value="m">mΩ</option>
+                            <option value="1" selected>Ω</option>
+                            <option value="k">kΩ</option>
+                            <option value="M">MΩ</option>
+                            <option value="G">GΩ</option>
+                            <option value="T">TΩ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tolerancia y Máximo de Componentes -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-theme-gray-500 uppercase tracking-wider mb-2">Tolerancia / Serie</label>
+                        <select id="series-select" class="w-full bg-theme-gray-100 dark:bg-theme-gray-800 border-0 rounded-2xl px-4 py-3 font-medium focus:ring-2 focus:ring-theme-blue outline-none transition">
+                            <option value="E12">±10% (Serie E12)</option>
+                            <option value="E24" selected>±5% (Serie E24)</option>
+                            <option value="E96">±1% (Serie E96)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-theme-gray-500 uppercase tracking-wider mb-2">Máximo de Componentes</label>
+                        <select id="max-components" class="w-full bg-theme-gray-100 dark:bg-theme-gray-800 border-0 rounded-2xl px-4 py-3 font-medium focus:ring-2 focus:ring-theme-blue outline-none transition">
+                            <option value="1">1 Resistencia</option>
+                            <option value="2" selected>Hasta 2 Resistencias</option>
+                            <option value="3">Hasta 3 Resistencias</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Botón de Calcular -->
+                <button type="submit" class="w-full mt-2 bg-theme-blue hover:bg-blue-600 text-white font-semibold py-3.5 rounded-2xl shadow-md transition flex items-center justify-center gap-2">
+                    <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                    Calcular Combinaciones
+                </button>
+            </form>
+        </section>
+
+        <!-- Resultados -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between px-2">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <i data-lucide="layers" class="w-5 h-5 text-theme-green"></i>
+                    Resultados Disponibles
+                </h3>
+                <span id="results-count" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-theme-gray-200 dark:bg-theme-gray-800 text-theme-gray-600 dark:text-theme-gray-300">
+                    0 opciones
+                </span>
+            </div>
+
+            <div id="results-container" class="space-y-4">
+                <!-- Opciones dinámicas -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Botón Flotante Inferior Izquierdo (Lista de Resistores Agregados) -->
+    <button onclick="openInventoryModal()" class="fixed bottom-6 left-6 z-40 w-14 h-14 rounded-full bg-theme-blue hover:bg-blue-600 text-white shadow-2xl flex items-center justify-center transition-all transform hover:scale-105 active:scale-95">
+        <i data-lucide="list" class="w-6 h-6"></i>
+        <span id="inventory-badge" class="absolute -top-1 -right-1 bg-theme-orange text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-theme-gray-900 hidden">0</span>
+    </button>
+
+    <!-- Modal para Visor de Código de Colores -->
+    <div id="color-code-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 glass bg-black/50 backdrop-blur-md animate-in fade-in duration-200">
+        <div class="bg-white dark:bg-theme-gray-900 rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-theme-gray-200 dark:border-theme-gray-800 space-y-6">
+            <div class="flex items-center justify-between border-b border-theme-gray-200 dark:border-theme-gray-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="palette" class="w-5 h-5 text-theme-purple"></i>
+                    <h3 class="text-lg font-bold">Código de Colores de Componentes</h3>
+                </div>
+                <button onclick="closeColorModal()" class="w-8 h-8 rounded-full bg-theme-gray-100 dark:bg-theme-gray-800 flex items-center justify-center hover:bg-theme-gray-200 dark:hover:bg-theme-gray-700 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="modal-color-body" class="space-y-6 max-h-[65vh] overflow-y-auto pr-1">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Agregar Cantidades a la Lista -->
+    <div id="add-quantity-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 glass bg-black/50 backdrop-blur-md animate-in fade-in duration-200">
+        <div class="bg-white dark:bg-theme-gray-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-theme-gray-200 dark:border-theme-gray-800 space-y-5">
+            <div class="flex items-center justify-between border-b border-theme-gray-200 dark:border-theme-gray-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-theme-blue"></i>
+                    <h3 class="text-lg font-bold">Agregar Cantidades a la Lista</h3>
+                </div>
+                <button onclick="closeQuantityModal()" class="w-8 h-8 rounded-full bg-theme-gray-100 dark:bg-theme-gray-800 flex items-center justify-center hover:bg-theme-gray-200 dark:hover:bg-theme-gray-700 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-theme-gray-500 font-medium">Especifica cuántas piezas necesitas de cada valor para esta combinación:</p>
+
+            <div id="quantity-inputs-container" class="space-y-3">
+                <!-- Inputs dinámicos por valor de resistencia -->
+            </div>
+
+            <button onclick="confirmAddToList()" class="w-full bg-theme-blue hover:bg-blue-600 text-white font-semibold py-3 rounded-2xl shadow-lg transition flex items-center justify-center gap-2">
+                <i data-lucide="check" class="w-5 h-5"></i>
+                Guardar en la Lista
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Inventario / Lista de Resistencias Agregadas -->
+    <div id="inventory-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 glass bg-black/50 backdrop-blur-md animate-in fade-in duration-200">
+        <div class="bg-white dark:bg-theme-gray-900 rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-theme-gray-200 dark:border-theme-gray-800 space-y-5">
+            <div class="flex items-center justify-between border-b border-theme-gray-200 dark:border-theme-gray-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="list-checks" class="w-5 h-5 text-theme-green"></i>
+                    <h3 class="text-lg font-bold">Lista de Resistores Agregados</h3>
+                </div>
+                <button onclick="closeInventoryModal()" class="w-8 h-8 rounded-full bg-theme-gray-100 dark:bg-theme-gray-800 flex items-center justify-center hover:bg-theme-gray-200 dark:hover:bg-theme-gray-700 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="inventory-list-body" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                <!-- Lista dinámica -->
+            </div>
+
+            <!-- Botones de acción inferiores (Copiar y Vaciar) -->
+            <div class="grid grid-cols-3 gap-2 pt-2">
+                <button onclick="copyInventoryText()" class="col-span-1 bg-theme-green hover:bg-green-600 text-white font-semibold py-3 rounded-2xl shadow-md transition flex items-center justify-center gap-1.5 text-xs">
+                    <i data-lucide="copy" class="w-4 h-4"></i>
+                    Copiar
+                </button>
+                <button onclick="clearInventory()" class="col-span-1 bg-theme-gray-200 dark:bg-theme-gray-800 hover:bg-theme-gray-300 dark:hover:bg-theme-gray-700 text-slate-800 dark:text-slate-200 font-semibold py-3 rounded-2xl transition text-xs">
+                    Vaciar
+                </button>
+                <button onclick="closeInventoryModal()" class="col-span-1 bg-theme-blue hover:bg-blue-600 text-white font-semibold py-3 rounded-2xl shadow-lg transition text-xs">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Lógica -->
+    <script>
+        // --- CONSTANTES ---
+        const SERIES_BASE = {
+            'E12': [1.0, 1.2, 1.5, 1.8, 2.2, 2.7, 3.3, 3.9, 4.7, 5.6, 6.8, 8.2],
+            'E24': [1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.7, 3.0, 3.3, 3.6, 3.9, 4.3, 4.7, 5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1],
+            'E96': [100, 102, 105, 107, 110, 113, 115, 118, 121, 124, 127, 130, 133, 137, 140, 143, 147, 150, 154, 158, 162, 165, 169, 174, 178, 182, 187, 191, 196, 200, 205, 210, 215, 221, 226, 232, 237, 243, 249, 255, 261, 267, 274, 280, 287, 294, 301, 309, 316, 324, 332, 340, 348, 357, 365, 374, 383, 392, 402, 412, 422, 432, 442, 453, 464, 475, 487, 499, 511, 523, 536, 549, 562, 576, 590, 604, 619, 634, 649, 665, 681, 698, 715, 732, 750, 768, 787, 806, 825, 845, 866, 887, 909, 931, 953, 976]
+        };
+
+        const PREFIX_MAP = { 'p': 1e-12, 'n': 1e-9, 'u': 1e-6, 'm': 1e-3, '1': 1, 'k': 1e3, 'M': 1e6, 'G': 1e9, 'T': 1e12 };
+
+        const COLOR_MAP = {
+            0: { name: 'Negro', bg: 'bg-black' },
+            1: { name: 'Marrón', bg: 'bg-amber-900' },
+            2: { name: 'Rojo', bg: 'bg-red-600' },
+            3: { name: 'Naranja', bg: 'bg-orange-500' },
+            4: { name: 'Amarillo', bg: 'bg-yellow-400' },
+            5: { name: 'Verde', bg: 'bg-green-600' },
+            6: { name: 'Azul', bg: 'bg-blue-600' },
+            7: { name: 'Violeta', bg: 'bg-purple-600' },
+            8: { name: 'Gris', bg: 'bg-gray-500' },
+            9: { name: 'Blanco', bg: 'bg-white' },
+            '-1': { name: 'Dorado', bg: 'bg-amber-400' },
+            '-2': { name: 'Plateado', bg: 'bg-slate-300' }
+        };
+
+        // Estado Global
+        let currentSymbolStandard = 'ansi';
+        let currentTheme = 'dark';
+        let currentCalculatedResults = [];
+        let selectedOptionIndex = null;
+        let addedResistorsList = JSON.parse(localStorage.getItem('resiscalc_inventory')) || []; // Cargar desde localStorage
+        let targetItemForQuantity = null;
+
+        window.onload = function() {
+            lucide.createIcons();
+            setupEventListeners();
+            updateInventoryBadge();
+            calculate();
+        };
+
+        function setupEventListeners() {
+            document.addEventListener('click', (e) => {
+                const menu = document.getElementById('menu-dropdown');
+                const btn = document.getElementById('menu-btn');
+                if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            });
+
+            const colorModal = document.getElementById('color-code-modal');
+            colorModal.addEventListener('click', (e) => {
+                if (e.target === colorModal) closeColorModal();
+            });
+
+            const qtyModal = document.getElementById('add-quantity-modal');
+            qtyModal.addEventListener('click', (e) => {
+                if (e.target === qtyModal) closeQuantityModal();
+            });
+
+            const invModal = document.getElementById('inventory-modal');
+            invModal.addEventListener('click', (e) => {
+                if (e.target === invModal) closeInventoryModal();
+            });
+
+            window.addEventListener('scroll', () => {
+                const header = document.getElementById('main-header');
+                const logo = document.getElementById('app-logo');
+                const title = document.getElementById('app-title');
+                const subtitle = document.getElementById('app-subtitle');
+
+                if (window.scrollY > 30) {
+                    header.classList.add('glass', 'border-theme-gray-200', 'dark:border-theme-gray-800', 'py-2');
+                    header.classList.remove('py-4', 'border-transparent');
+                    logo.classList.add('w-0', 'h-0', 'opacity-0', 'scale-0', 'overflow-hidden', 'm-0');
+                    logo.classList.remove('w-12', 'h-12', 'opacity-100', 'scale-100');
+                    title.classList.add('text-lg');
+                    title.classList.remove('text-2xl');
+                    subtitle.classList.add('hidden');
+                } else {
+                    header.classList.remove('glass', 'border-theme-gray-200', 'dark:border-theme-gray-800', 'py-2');
+                    header.classList.add('py-4', 'border-transparent');
+                    logo.classList.remove('w-0', 'h-0', 'opacity-0', 'scale-0', 'overflow-hidden', 'm-0');
+                    logo.classList.add('w-12', 'h-12', 'opacity-100', 'scale-100');
+                    title.classList.remove('text-lg');
+                    title.classList.add('text-2xl');
+                    subtitle.classList.remove('hidden');
+                }
+            });
+        }
+
+        function toggleMenu() {
+            document.getElementById('menu-dropdown').classList.toggle('hidden');
+        }
+
+        function setSymbolStandard(standard) {
+            currentSymbolStandard = standard;
+            document.getElementById('check-ansi').classList.toggle('hidden', standard !== 'ansi');
+            document.getElementById('check-iec').classList.toggle('hidden', standard !== 'iec');
+            if (selectedOptionIndex !== null) {
+                renderResults(currentCalculatedResults);
+            }
+        }
+
+        function setTheme(theme) {
+            currentTheme = theme;
+            const html = document.documentElement;
+            html.classList.remove('dark', 'theme-navy');
+
+            document.getElementById('check-theme-light').classList.add('hidden');
+            document.getElementById('check-theme-dark').classList.add('hidden');
+            document.getElementById('check-theme-navy').classList.add('hidden');
+
+            if (theme === 'dark') {
+                html.classList.add('dark');
+                document.getElementById('check-theme-dark').classList.remove('hidden');
+            } else if (theme === 'navy') {
+                html.classList.add('dark', 'theme-navy');
+                document.getElementById('check-theme-navy').classList.remove('hidden');
+            } else {
+                document.getElementById('check-theme-light').classList.remove('hidden');
+            }
+        }
+
+        function getCommercialValues(seriesKey) {
+            const baseValues = SERIES_BASE[seriesKey];
+            const isHighRes = (seriesKey === 'E96');
+            let values = [];
+
+            const powers = [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+            powers.forEach(p => {
+                const mult = Math.pow(10, p);
+                baseValues.forEach(base => {
+                    const val = isHighRes ? (base / 100) * mult : base * mult;
+                    if (val >= 0.01 && val <= 22e6) {
+                        values.push(val);
+                    }
+                });
+            });
+
+            return Array.from(new Set(values)).sort((a, b) => a - b);
+        }
+
+        function calculate() {
+            selectedOptionIndex = null;
+            const rawVal = parseFloat(document.getElementById('target-value').value);
+            if (isNaN(rawVal) || rawVal <= 0) {
+                renderResults([]);
+                return;
+            }
+
+            const unitMult = PREFIX_MAP[document.getElementById('target-unit').value];
+            const target = rawVal * unitMult;
+            const seriesKey = document.getElementById('series-select').value;
+            const maxComp = parseInt(document.getElementById('max-components').value);
+            const commercialList = getCommercialValues(seriesKey);
+
+            let results = [];
+
+            let bestSingle = commercialList[0];
+            let minDiffSingle = Math.abs(target - bestSingle);
+            for (let val of commercialList) {
+                let diff = Math.abs(target - val);
+                if (diff < minDiffSingle) {
+                    minDiffSingle = diff;
+                    bestSingle = val;
+                }
+            }
+
+            const errorSingle = (Math.abs(bestSingle - target) / target) * 100;
+            const isExactCommercial = errorSingle < 0.0001;
+
+            results.push({
+                type: 'direct',
+                typeLabel: '1 Resistencia Directa',
+                resistors: [bestSingle],
+                calculated: bestSingle,
+                error: errorSingle,
+                score: errorSingle
+            });
+
+            if (maxComp >= 2) {
+                for (let i = 0; i < commercialList.length; i++) {
+                    let r1 = commercialList[i];
+                    if (r1 >= target) continue;
+                    let rem = target - r1;
+                    let r2 = findClosest(commercialList, rem);
+                    let total = r1 + r2;
+                    let err = (Math.abs(total - target) / target) * 100;
+
+                    results.push({
+                        type: 'series',
+                        typeLabel: 'Serie (2 R)',
+                        resistors: [r1, r2],
+                        calculated: total,
+                        error: err,
+                        score: err + 0.05
+                    });
+                }
+
+                for (let i = 0; i < commercialList.length; i++) {
+                    let r1 = commercialList[i];
+                    if (r1 <= target) continue;
+                    let reqR2 = (target * r1) / (r1 - target);
+                    if (reqR2 <= 0) continue;
+
+                    let r2 = findClosest(commercialList, reqR2);
+                    let total = (r1 * r2) / (r1 + r2);
+                    let err = (Math.abs(total - target) / target) * 100;
+
+                    results.push({
+                        type: 'parallel',
+                        typeLabel: 'Paralelo (2 R)',
+                        resistors: [r1, r2],
+                        calculated: total,
+                        error: err,
+                        score: err + 0.05
+                    });
+                }
+            }
+
+            if (maxComp >= 3 && !isExactCommercial) {
+                for (let i = 0; i < commercialList.length; i += 3) {
+                    let r1 = commercialList[i];
+                    if (r1 >= target) continue;
+                    for (let j = i; j < commercialList.length; j += 3) {
+                        let r2 = commercialList[j];
+                        if (r1 + r2 >= target) continue;
+                        let rem = target - (r1 + r2);
+                        let r3 = findClosest(commercialList, rem);
+
+                        let total = r1 + r2 + r3;
+                        let err = (Math.abs(total - target) / target) * 100;
+                        results.push({
+                            type: 'series-3',
+                            typeLabel: 'Serie (3 R)',
+                            resistors: [r1, r2, r3],
+                            calculated: total,
+                            error: err,
+                            score: err + 0.15
+                        });
+                    }
+                }
+            }
+
+            results.sort((a, b) => {
+                if (isExactCommercial) {
+                    if (a.type === 'direct' && b.type !== 'direct') return -1;
+                    if (b.type === 'direct' && a.type !== 'direct') return 1;
+                }
+                return a.score - b.score;
+            });
+
+            let uniqueResults = [];
+            let seen = new Set();
+            for (let item of results) {
+                let key = item.type + '-' + item.resistors.sort((a,b)=>a-b).map(r=>r.toFixed(3)).join(',');
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueResults.push(item);
+                }
+            }
+
+            currentCalculatedResults = uniqueResults.slice(0, 6);
+            renderResults(currentCalculatedResults);
+        }
+
+        function findClosest(arr, target) {
+            let left = 0, right = arr.length - 1;
+            while (left <= right) {
+                let mid = Math.floor((left + right) / 2);
+                if (arr[mid] === target) return arr[mid];
+                if (arr[mid] < target) left = mid + 1;
+                else right = mid - 1;
+            }
+            if (left >= arr.length) return arr[arr.length - 1];
+            if (right < 0) return arr[0];
+            return (Math.abs(arr[left] - target) < Math.abs(arr[right] - target)) ? arr[left] : arr[right];
+        }
+
+        function formatEngineering(val) {
+            if (val === 0) return "0 Ω";
+            const units = [
+                { limit: 1e12, symbol: 'TΩ' },
+                { limit: 1e9, symbol: 'GΩ' },
+                { limit: 1e6, symbol: 'MΩ' },
+                { limit: 1e3, symbol: 'kΩ' },
+                { limit: 1, symbol: 'Ω' },
+                { limit: 1e-3, symbol: 'mΩ' },
+                { limit: 1e-6, symbol: 'µΩ' },
+                { limit: 1e-9, symbol: 'nΩ' },
+                { limit: 1e-12, symbol: 'pΩ' }
+            ];
+
+            for (let u of units) {
+                if (Math.abs(val) >= u.limit * 0.999) {
+                    let formatted = (val / u.limit).toFixed(2).replace(/\.00$/, '');
+                    return `${formatted} ${u.symbol}`;
+                }
+            }
+            return `${val.toExponential(2)} Ω`;
+        }
+
+        function selectCard(index) {
+            if (selectedOptionIndex === index) {
+                selectedOptionIndex = null;
+            } else {
+                selectedOptionIndex = index;
+            }
+            renderResults(currentCalculatedResults);
+        }
+
+        function renderResults(results) {
+            const container = document.getElementById('results-container');
+            document.getElementById('results-count').textContent = `${results.length} opciones`;
+            container.innerHTML = '';
+
+            if (results.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white dark:bg-theme-gray-900 rounded-3xl p-8 text-center text-theme-gray-500 border border-theme-gray-200 dark:border-theme-gray-800">
+                        <i data-lucide="alert-circle" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
+                        <p>Sin resultados disponibles.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            results.forEach((item, index) => {
+                const isSelected = selectedOptionIndex === index;
+                const card = document.createElement('div');
+                card.className = `bg-white dark:bg-theme-gray-900 rounded-3xl p-5 border transition-all cursor-pointer ${
+                    isSelected 
+                        ? 'border-theme-blue ring-2 ring-theme-blue/30 shadow-md' 
+                        : 'border-theme-gray-200 dark:border-theme-gray-800 hover:border-theme-gray-300 dark:hover:border-theme-gray-700'
+                }`;
+
+                const isExact = item.error < 0.01;
+                const badgeColor = isExact ? 'bg-theme-green/10 text-theme-green border-theme-green/20' : 'bg-theme-orange/10 text-theme-orange border-theme-orange/20';
+                const compText = item.resistors.map(r => formatEngineering(r)).join(item.type.includes('parallel') ? ' || ' : ' + ');
+
+                card.innerHTML = `
+                    <div onclick="selectCard(${index})" class="flex items-center justify-between">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold px-3 py-1 rounded-full border ${badgeColor}">
+                                    ${item.typeLabel}
+                                </span>
+                                ${index === 0 ? '<span class="text-xs font-bold px-2.5 py-1 rounded-full bg-theme-blue text-white">Recomendada</span>' : ''}
+                            </div>
+                            <div class="text-2xl font-extrabold tracking-tight pt-1">
+                                ${formatEngineering(item.calculated)}
+                            </div>
+                            <div class="text-sm font-medium text-theme-gray-500">
+                                Componentes: <span class="font-semibold text-slate-800 dark:text-slate-200">${compText}</span>
+                            </div>
+                        </div>
+
+                        <div class="text-right flex flex-col items-end gap-2">
+                            <span class="text-xs font-semibold ${isExact ? 'text-theme-green' : 'text-theme-orange'}">
+                                Error: ${item.error.toFixed(2)}%
+                            </span>
+                            <div class="w-8 h-8 rounded-full bg-theme-gray-100 dark:bg-theme-gray-800 flex items-center justify-center text-theme-gray-500">
+                                <i data-lucide="${isSelected ? 'chevron-up' : 'chevron-down'}" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalle Desplegable -->
+                    ${isSelected ? `
+                        <div class="mt-4 pt-4 border-t border-theme-gray-100 dark:border-theme-gray-800 space-y-4 animate-in fade-in duration-200">
+                            <div>
+                                <span class="text-xs font-semibold text-theme-gray-500 uppercase tracking-wider block mb-2">Esquema del Circuito</span>
+                                <div class="bg-theme-gray-100 dark:bg-theme-gray-800/80 p-4 rounded-2xl flex items-center justify-center min-h-[90px]">
+                                    ${renderSVGDiagram(item)}
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-end gap-2">
+                                <button onclick="event.stopPropagation(); openQuantityModal(${index})" class="flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl bg-theme-green text-white hover:bg-green-600 transition shadow-sm">
+                                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                    Agregar a la Lista
+                                </button>
+                                <button onclick="event.stopPropagation(); openColorModal(${index})" class="flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-xl bg-theme-blue text-white hover:bg-blue-600 transition shadow-sm">
+                                    <i data-lucide="palette" class="w-4 h-4"></i>
+                                    Código de Colores
+                                </button>
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+
+                container.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        function renderSVGDiagram(item) {
+            const isANSI = currentSymbolStandard === 'ansi';
+            const stroke = "currentColor";
+
+            if (item.type === 'direct') {
+                return `
+                <svg class="w-48 h-14 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 160 40">
+                    <line x1="10" y1="20" x2="40" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                    ${renderResistorSymbol(40, 20, isANSI)}
+                    <line x1="120" y1="20" x2="150" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                    <text x="80" y="36" text-anchor="middle" font-size="9" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[0])}</text>
+                </svg>`;
+            }
+
+            if (item.type.includes('series')) {
+                const count = item.resistors.length;
+                if (count === 2) {
+                    return `
+                    <svg class="w-64 h-14 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 220 40">
+                        <line x1="10" y1="20" x2="30" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        ${renderResistorSymbol(30, 20, isANSI)}
+                        <line x1="110" y1="20" x2="120" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        ${renderResistorSymbol(120, 20, isANSI)}
+                        <line x1="200" y1="20" x2="210" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                    </svg>`;
+                } else {
+                    return `
+                    <svg class="w-72 h-14 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 280 40">
+                        <line x1="5" y1="20" x2="20" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        ${renderResistorSymbol(20, 20, isANSI)}
+                        <line x1="100" y1="20" x2="105" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        ${renderResistorSymbol(105, 20, isANSI)}
+                        <line x1="185" y1="20" x2="190" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        ${renderResistorSymbol(190, 20, isANSI)}
+                        <line x1="270" y1="20" x2="275" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                    </svg>`;
+                }
+            }
+
+            if (item.type === 'parallel') {
+                return `
+                <svg class="w-56 h-20 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 160 60">
+                    <line x1="10" y1="30" x2="30" y2="30" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="30" y1="12" x2="30" y2="48" stroke="${stroke}" stroke-width="2.5"/>
+                    
+                    <line x1="30" y1="12" x2="40" y2="12" stroke="${stroke}" stroke-width="2.5"/>
+                    ${renderResistorSymbol(40, 12, isANSI)}
+                    <line x1="120" y1="12" x2="130" y2="12" stroke="${stroke}" stroke-width="2.5"/>
+
+                    <line x1="30" y1="48" x2="40" y2="48" stroke="${stroke}" stroke-width="2.5"/>
+                    ${renderResistorSymbol(40, 48, isANSI)}
+                    <line x1="120" y1="48" x2="130" y2="48" stroke="${stroke}" stroke-width="2.5"/>
+
+                    <line x1="130" y1="12" x2="130" y2="48" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="130" y1="30" x2="150" y2="30" stroke="${stroke}" stroke-width="2.5"/>
+                </svg>`;
+            }
+
+            return '';
+        }
+
+        function renderResistorSymbol(x, y, isANSI) {
+            const stroke = "currentColor";
+            if (isANSI) {
+                return `<path d="M ${x} ${y} L ${x+10} ${y-7} L ${x+25} ${y+7} L ${x+40} ${y-7} L ${x+55} ${y+7} L ${x+70} ${y-7} L ${x+80} ${y}" fill="none" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round"/>`;
+            } else {
+                return `<rect x="${x}" y="${y-7}" width="80" height="14" rx="2" fill="none" stroke="${stroke}" stroke-width="2.5"/>`;
+            }
+        }
+
+        function openColorModal(index) {
+            const item = currentCalculatedResults[index];
+            if (!item) return;
+
+            const modal = document.getElementById('color-code-modal');
+            const container = document.getElementById('modal-color-body');
+            const seriesKey = document.getElementById('series-select').value;
+
+            container.innerHTML = '';
+
+            item.resistors.forEach((res, rIdx) => {
+                const bands = calculateColorBands(res, seriesKey);
+
+                const card = document.createElement('div');
+                card.className = "bg-theme-gray-100 dark:bg-theme-gray-800 p-4 rounded-2xl space-y-3";
+
+                let bandsHTML = bands.map(b => `
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="w-6 h-10 rounded-md ${b.bg} shadow-inner flex items-center justify-center border border-black/10"></div>
+                        <span class="text-[10px] font-semibold text-theme-gray-500">${b.role}</span>
+                        <span class="text-xs font-bold">${b.name}</span>
+                    </div>
+                `).join('');
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-sm">Resistencia ${rIdx + 1}: ${formatEngineering(res)}</span>
+                    </div>
+
+                    <div class="relative w-full h-14 bg-amber-100 dark:bg-amber-950/40 rounded-full border-2 border-amber-300 dark:border-amber-800/50 flex items-center justify-around px-8 shadow-inner overflow-hidden">
+                        <div class="absolute left-0 w-8 h-1 bg-slate-400"></div>
+                        <div class="absolute right-0 w-8 h-1 bg-slate-400"></div>
+                        ${bands.map(b => `<div class="w-3 h-full ${b.bg} shadow-md"></div>`).join('')}
+                    </div>
+
+                    <div class="grid grid-cols-${bands.length} gap-1 pt-2 text-center">
+                        ${bandsHTML}
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeColorModal() {
+            document.getElementById('color-code-modal').classList.add('hidden');
+        }
+
+        function openQuantityModal(index) {
+            targetItemForQuantity = currentCalculatedResults[index];
+            if (!targetItemForQuantity) return;
+
+            const modal = document.getElementById('add-quantity-modal');
+            const container = document.getElementById('quantity-inputs-container');
+            container.innerHTML = '';
+
+            targetItemForQuantity.resistors.forEach((res, rIdx) => {
+                const row = document.createElement('div');
+                row.className = "flex items-center justify-between bg-theme-gray-100 dark:bg-theme-gray-800 p-3 rounded-2xl";
+                row.innerHTML = `
+                    <div class="text-sm font-semibold">
+                        <span>R${rIdx + 1}:</span> <span class="text-theme-blue">${formatEngineering(res)}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="number" min="1" value="1" id="qty-input-${rIdx}" 
+                            class="w-20 bg-white dark:bg-theme-gray-900 border border-theme-gray-200 dark:border-theme-gray-700 rounded-xl px-3 py-1.5 text-center font-bold focus:ring-2 focus:ring-theme-blue outline-none">
+                        <span class="text-xs text-theme-gray-500 font-medium">pz</span>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeQuantityModal() {
+            document.getElementById('add-quantity-modal').classList.add('hidden');
+            targetItemForQuantity = null;
+        }
+
+        function confirmAddToList() {
+            if (!targetItemForQuantity) return;
+
+            targetItemForQuantity.resistors.forEach((res, rIdx) => {
+                const input = document.getElementById(`qty-input-${rIdx}`);
+                const qty = parseInt(input ? input.value : 1) || 1;
+                const formattedVal = formatEngineering(res);
+
+                const existing = addedResistorsList.find(item => item.value === formattedVal);
+                if (existing) {
+                    existing.quantity += qty;
+                } else {
+                    addedResistorsList.push({
+                        value: formattedVal,
+                        raw: res,
+                        quantity: qty
+                    });
+                }
+            });
+
+            saveInventoryToStorage();
+            closeQuantityModal();
+            updateInventoryBadge();
+        }
+
+        function saveInventoryToStorage() {
+            localStorage.setItem('resiscalc_inventory', JSON.stringify(addedResistorsList));
+        }
+
+        function updateInventoryBadge() {
+            const badge = document.getElementById('inventory-badge');
+            const totalItems = addedResistorsList.reduce((acc, curr) => acc + curr.quantity, 0);
+            if (totalItems > 0) {
+                badge.textContent = totalItems;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function openInventoryModal() {
+            const modal = document.getElementById('inventory-modal');
+            const container = document.getElementById('inventory-list-body');
+            container.innerHTML = '';
+
+            if (addedResistorsList.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-theme-gray-500">
+                        <i data-lucide="package-open" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
+                        <p class="text-sm font-medium">No hay resistores agregados todavía.</p>
+                    </div>
+                `;
+            } else {
+                addedResistorsList.forEach((item, index) => {
+                    const row = document.createElement('div');
+                    row.className = "flex items-center justify-between bg-theme-gray-100 dark:bg-theme-gray-800 p-3.5 rounded-2xl";
+                    row.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-theme-blue/10 text-theme-blue flex items-center justify-center font-bold text-sm">
+                                ${item.quantity}x
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm">${item.value}</h4>
+                                <span class="text-[11px] text-theme-gray-500 font-medium">Valor comercial</span>
+                            </div>
+                        </div>
+                        <button onclick="removeInventoryItem(${index})" class="w-8 h-8 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition flex items-center justify-center">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    `;
+                    container.appendChild(row);
+                });
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeInventoryModal() {
+            document.getElementById('inventory-modal').classList.add('hidden');
+        }
+
+        function removeInventoryItem(index) {
+            addedResistorsList.splice(index, 1);
+            saveInventoryToStorage();
+            updateInventoryBadge();
+            openInventoryModal();
+        }
+
+        function clearInventory() {
+            addedResistorsList = [];
+            saveInventoryToStorage();
+            updateInventoryBadge();
+            openInventoryModal();
+        }
+
+        // Función para copiar la lista limpia en formato de texto para WhatsApp/Notas
+        function copyInventoryText() {
+            if (addedResistorsList.length === 0) {
+                alert('La lista está vacía.');
+                return;
+            }
+
+            let textToCopy = "📋 *Lista de Resistores - ResisFlow*\n\n";
+            addedResistorsList.forEach(item => {
+                textToCopy += `• ${item.quantity} pz de ${item.value}\n`;
+            });
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert('¡Lista copiada al portapapeles! Ya puedes pegarla en WhatsApp o Notas.');
+            }).catch(err => {
+                console.error('Error al copiar: ', err);
+            });
+        }
+
+        function calculateColorBands(value, seriesKey) {
+            const is5Bands = (seriesKey === 'E96');
+            
+            let exp = Math.floor(Math.log10(value));
+            let mantissa = value / Math.pow(10, exp);
+
+            let sigDigits = is5Bands ? Math.round(mantissa * 100) : Math.round(mantissa * 10);
+            let multExp = is5Bands ? exp - 2 : exp - 1;
+
+            let digitsStr = sigDigits.toString();
+            if (is5Bands && digitsStr.length < 3) digitsStr = digitsStr.padEnd(3, '0');
+            if (!is5Bands && digitsStr.length < 2) digitsStr = digitsStr.padEnd(2, '0');
+
+            let bands = [];
+
+            let d1 = parseInt(digitsStr[0]);
+            bands.push({ ...COLOR_MAP[d1], role: '1° Cifra' });
+
+            let d2 = parseInt(digitsStr[1]);
+            bands.push({ ...COLOR_MAP[d2], role: '2° Cifra' });
+
+            if (is5Bands) {
+                let d3 = parseInt(digitsStr[2]);
+                bands.push({ ...COLOR_MAP[d3], role: '3° Cifra' });
+            }
+
+            let multColor = COLOR_MAP[multExp] || COLOR_MAP[0];
+            bands.push({ ...multColor, role: 'Multiplicador' });
+
+            const tolColor = seriesKey === 'E96' ? COLOR_MAP[1] : COLOR_MAP['-1'];
+            bands.push({ ...tolColor, role: 'Tolerancia' });
+
+            return bands;
+        }
+    </script>
+</body>
+</html>
