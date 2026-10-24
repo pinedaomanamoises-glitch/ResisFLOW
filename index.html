@@ -162,15 +162,10 @@
                         <input type="number" id="target-value" step="any" placeholder="Ej. 220, 4.7, 10" value="220"
                             class="flex-1 bg-theme-gray-100 dark:bg-theme-gray-800 border-0 rounded-2xl px-4 py-3 text-lg font-semibold focus:ring-2 focus:ring-theme-blue outline-none transition">
                         <select id="target-unit" class="bg-theme-gray-100 dark:bg-theme-gray-800 border-0 rounded-2xl px-4 py-3 text-base font-semibold focus:ring-2 focus:ring-theme-blue outline-none transition">
-                            <option value="p">pΩ</option>
-                            <option value="n">nΩ</option>
-                            <option value="u">µΩ</option>
                             <option value="m">mΩ</option>
                             <option value="1" selected>Ω</option>
                             <option value="k">kΩ</option>
                             <option value="M">MΩ</option>
-                            <option value="G">GΩ</option>
-                            <option value="T">TΩ</option>
                         </select>
                     </div>
                 </div>
@@ -222,7 +217,7 @@
 
     </main>
 
-    <!-- Botón Flotante Inferior Izquierdo (Lista de Resistores Agregados) -->
+    <!-- Botón Flotante Inferior Izquierdo -->
     <button onclick="openInventoryModal()" class="fixed bottom-6 left-6 z-40 w-14 h-14 rounded-full bg-theme-blue hover:bg-blue-600 text-white shadow-2xl flex items-center justify-center transition-all transform hover:scale-105 active:scale-95">
         <i data-lucide="list" class="w-6 h-6"></i>
         <span id="inventory-badge" class="absolute -top-1 -right-1 bg-theme-orange text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-theme-gray-900 hidden">0</span>
@@ -247,7 +242,7 @@
         </div>
     </div>
 
-    <!-- Modal para Agregar Cantidades a la Lista -->
+    <!-- Modal para Agregar Cantidades -->
     <div id="add-quantity-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 glass bg-black/50 backdrop-blur-md animate-in fade-in duration-200">
         <div class="bg-white dark:bg-theme-gray-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-theme-gray-200 dark:border-theme-gray-800 space-y-5">
             <div class="flex items-center justify-between border-b border-theme-gray-200 dark:border-theme-gray-800 pb-3">
@@ -263,7 +258,7 @@
             <p id="pack-modal-subtitle" class="text-xs text-theme-gray-500 font-medium">Especifica cuántas piezas necesitas:</p>
 
             <div id="quantity-inputs-container" class="space-y-3">
-                <!-- Inputs dinámicos por valor de resistencia -->
+                <!-- Inputs dinámicos -->
             </div>
 
             <button onclick="confirmAddToList()" class="w-full bg-theme-blue hover:bg-blue-600 text-white font-semibold py-3 rounded-2xl shadow-lg transition flex items-center justify-center gap-2">
@@ -273,7 +268,7 @@
         </div>
     </div>
 
-    <!-- Modal de Inventario / Lista de Resistencias Agregadas -->
+    <!-- Modal de Inventario -->
     <div id="inventory-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 glass bg-black/50 backdrop-blur-md animate-in fade-in duration-200">
         <div class="bg-white dark:bg-theme-gray-900 rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-theme-gray-200 dark:border-theme-gray-800 space-y-5">
             <div class="flex items-center justify-between border-b border-theme-gray-200 dark:border-theme-gray-800 pb-3">
@@ -290,7 +285,6 @@
                 <!-- Lista dinámica -->
             </div>
 
-            <!-- Botones de acción inferiores (Copiar y Vaciar) -->
             <div class="grid grid-cols-3 gap-2 pt-2">
                 <button onclick="copyInventoryText()" class="col-span-1 bg-theme-green hover:bg-green-600 text-white font-semibold py-3 rounded-2xl shadow-md transition flex items-center justify-center gap-1.5 text-xs">
                     <i data-lucide="copy" class="w-4 h-4"></i>
@@ -315,7 +309,7 @@
             'E96': [100, 102, 105, 107, 110, 113, 115, 118, 121, 124, 127, 130, 133, 137, 140, 143, 147, 150, 154, 158, 162, 165, 169, 174, 178, 182, 187, 191, 196, 200, 205, 210, 215, 221, 226, 232, 237, 243, 249, 255, 261, 267, 274, 280, 287, 294, 301, 309, 316, 324, 332, 340, 348, 357, 365, 374, 383, 392, 402, 412, 422, 432, 442, 453, 464, 475, 487, 499, 511, 523, 536, 549, 562, 576, 590, 604, 619, 634, 649, 665, 681, 698, 715, 732, 750, 768, 787, 806, 825, 845, 866, 887, 909, 931, 953, 976]
         };
 
-        const PREFIX_MAP = { 'p': 1e-12, 'n': 1e-9, 'u': 1e-6, 'm': 1e-3, '1': 1, 'k': 1e3, 'M': 1e6, 'G': 1e9, 'T': 1e12 };
+        const PREFIX_MAP = { 'm': 1e-3, '1': 1, 'k': 1e3, 'M': 1e6 };
 
         const COLOR_MAP = {
             0: { name: 'Negro', bg: 'bg-black' },
@@ -346,7 +340,7 @@
             setupEventListeners();
             document.getElementById('pack-size-select').value = currentPackSize;
             updateInventoryBadge();
-            renderResults([]); // Iniciar por defecto sin combinaciones
+            renderResults([]);
         };
 
         function setupEventListeners() {
@@ -443,12 +437,12 @@
             const isHighRes = (seriesKey === 'E96');
             let values = [];
 
-            const powers = [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+            const powers = [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7];
             powers.forEach(p => {
                 const mult = Math.pow(10, p);
                 baseValues.forEach(base => {
                     const val = isHighRes ? (base / 100) * mult : base * mult;
-                    if (val >= 0.01 && val <= 22e6) {
+                    if (val >= 0.001 && val <= 22e6) {
                         values.push(val);
                     }
                 });
@@ -597,15 +591,10 @@
         function formatEngineering(val) {
             if (val === 0) return "0 Ω";
             const units = [
-                { limit: 1e12, symbol: 'TΩ' },
-                { limit: 1e9, symbol: 'GΩ' },
                 { limit: 1e6, symbol: 'MΩ' },
                 { limit: 1e3, symbol: 'kΩ' },
                 { limit: 1, symbol: 'Ω' },
-                { limit: 1e-3, symbol: 'mΩ' },
-                { limit: 1e-6, symbol: 'µΩ' },
-                { limit: 1e-9, symbol: 'nΩ' },
-                { limit: 1e-12, symbol: 'pΩ' }
+                { limit: 1e-3, symbol: 'mΩ' }
             ];
 
             for (let u of units) {
@@ -722,9 +711,9 @@
                 const endX = startX + width;
                 return `
                 <svg class="w-56 h-14 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 200 45">
-                    <line x1="10" y1="20" x2="${startX}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="10" y1="20" x2="${startX}" y2="20" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                     ${renderResistorSymbol(startX, 20, isANSI)}
-                    <line x1="${endX}" y1="20" x2="190" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="${endX}" y1="20" x2="190" y2="20" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                     <text x="100" y="38" text-anchor="middle" font-size="9" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[0])}</text>
                 </svg>`;
             }
@@ -741,15 +730,15 @@
                     const totalW = e2 + 30;
                     return `
                     <svg class="w-72 h-14 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 ${totalW} 45">
-                        <line x1="10" y1="20" x2="${x1}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        <line x1="10" y1="20" x2="${x1}" y2="20" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                         ${renderResistorSymbol(x1, 20, isANSI)}
                         <text x="${x1 + w1/2}" y="38" text-anchor="middle" font-size="9" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[0])}</text>
 
-                        <line x1="${e1}" y1="20" x2="${x2}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        <line x1="${e1}" y1="20" x2="${x2}" y2="20" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                         ${renderResistorSymbol(x2, 20, isANSI)}
                         <text x="${x2 + w2/2}" y="38" text-anchor="middle" font-size="9" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[1])}</text>
 
-                        <line x1="${e2}" y1="20" x2="${totalW - 10}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        <line x1="${e2}" y1="20" x2="${totalW - 10}" y2="20" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                     </svg>`;
                 } else {
                     const w1 = isANSI ? 90 : 70;
@@ -764,19 +753,19 @@
                     const totalW = e3 + 20;
                     return `
                     <svg class="w-80 h-14 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 ${totalW} 45">
-                        <line x1="10" y1="20" x2="${x1}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        <line x1="10" y1="20" x2="${x1}" y2="20" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                         ${renderResistorSymbol(x1, 20, isANSI, w1)}
                         <text x="${x1 + w1/2}" y="38" text-anchor="middle" font-size="8" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[0])}</text>
 
-                        <line x1="${e1}" y1="20" x2="${x2}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        <line x1="${e1}" y1="20" x2="${x2}" y2="20" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                         ${renderResistorSymbol(x2, 20, isANSI, w2)}
                         <text x="${x2 + w2/2}" y="38" text-anchor="middle" font-size="8" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[1])}</text>
 
-                        <line x1="${e2}" y1="20" x2="${x3}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        <line x1="${e2}" y1="20" x2="${x3}" y2="20" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                         ${renderResistorSymbol(x3, 20, isANSI, w3)}
                         <text x="${x3 + w3/2}" y="38" text-anchor="middle" font-size="8" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[2])}</text>
 
-                        <line x1="${e3}" y1="20" x2="${totalW - 10}" y2="20" stroke="${stroke}" stroke-width="2.5"/>
+                        <line x1="${e3}" y1="20" x2="${totalW - 10}" y2="20" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                     </svg>`;
                 }
             }
@@ -788,33 +777,50 @@
                 const totalW = endX + 35;
                 return `
                 <svg class="w-64 h-24 mx-auto text-slate-700 dark:text-slate-300" viewBox="0 0 ${totalW} 75">
-                    <line x1="10" y1="36" x2="30" y2="36" stroke="${stroke}" stroke-width="2.5"/>
-                    <line x1="30" y1="14" x2="30" y2="58" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="10" y1="36" x2="30" y2="36" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="30" y1="14" x2="30" y2="58" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                     
-                    <line x1="30" y1="14" x2="${startX}" y2="14" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="30" y1="14" x2="${startX}" y2="14" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                     ${renderResistorSymbol(startX, 14, isANSI)}
-                    <line x1="${endX}" y1="14" x2="${totalW - 10}" y2="14" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="${endX}" y1="14" x2="${totalW - 10}" y2="14" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                     <text x="${startX + width/2}" y="27" text-anchor="middle" font-size="8" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[0])}</text>
 
-                    <line x1="30" y1="58" x2="${startX}" y2="58" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="30" y1="58" x2="${startX}" y2="58" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                     ${renderResistorSymbol(startX, 58, isANSI)}
-                    <line x1="${endX}" y1="58" x2="${totalW - 10}" y2="58" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="${endX}" y1="58" x2="${totalW - 10}" y2="58" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                     <text x="${startX + width/2}" y="71" text-anchor="middle" font-size="8" class="fill-theme-gray-500 font-semibold">${formatEngineering(item.resistors[1])}</text>
 
-                    <line x1="${totalW - 10}" y1="14" x2="${totalW - 10}" y2="58" stroke="${stroke}" stroke-width="2.5"/>
-                    <line x1="${totalW - 10}" y1="36" x2="${totalW + 10}" y2="36" stroke="${stroke}" stroke-width="2.5"/>
+                    <line x1="${totalW - 10}" y1="14" x2="${totalW - 10}" y2="58" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="${totalW - 10}" y1="36" x2="${totalW + 10}" y2="36" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>`;
             }
 
             return '';
         }
 
+        // Función del símbolo estético alineado a la imagen de referencia
         function renderResistorSymbol(x, y, isANSI, customWidth) {
             const stroke = "currentColor";
             if (isANSI) {
                 const w = customWidth || 104;
-                const step = w / 8;
-                return `<path d="M ${x} ${y} L ${x+step} ${y-7} L ${x+step*3} ${y+7} L ${x+step*5} ${y-7} L ${x+step*7} ${y+7} L ${x+w} ${y}" fill="none" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round"/>`;
+                const h = 12; // Altura del pico
+                const step = w / 6; // 6 tramos para formar exactamente 3 picos superiores y 3 valles inferiores
+                
+                const p0 = `${x} ${y}`;
+                const p1 = `${x + step * 0.5} ${y - h}`;
+                const p2 = `${x + step * 1.5} ${y + h}`;
+                const p3 = `${x + step * 2.5} ${y - h}`;
+                const p4 = `${x + step * 3.5} ${y + h}`;
+                const p5 = `${x + step * 4.5} ${y - h}`;
+                const p6 = `${x + step * 5.5} ${y + h}`;
+                const p7 = `${x + w} ${y}`;
+
+                return `<path d="M ${p0} L ${p1} L ${p2} L ${p3} L ${p4} L ${p5} L ${p6} L ${p7}" 
+                              fill="none" 
+                              stroke="${stroke}" 
+                              stroke-width="3" 
+                              stroke-linecap="round" 
+                              stroke-linejoin="round"/>`;
             } else {
                 const w = customWidth || 80;
                 return `<rect x="${x}" y="${y-6}" width="${w}" height="12" rx="2" fill="none" stroke="${stroke}" stroke-width="2.5"/>`;
